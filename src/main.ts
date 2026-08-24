@@ -35,8 +35,13 @@ loadEnvFile();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const origensPermitidas = [
+    'http://localhost:3001',
+    'http://localhost:3000',
+    ...(process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',').map((u) => u.trim()) : []),
+  ];
   app.enableCors({
-    origin: 'http://localhost:3001',
+    origin: origensPermitidas,
     credentials: true,
   });
   await app.listen(process.env.PORT ?? 3000);
