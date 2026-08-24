@@ -1,0 +1,254 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Clinic {
+  id        String   @id @default(uuid())
+  name      String
+  cro       String? // registro profissional (CRO) exibido nos documentos gerados
+  logoUrl   String?  @map("logo_url") // caminho da logo no storage
+  workingHours Json? @map("working_hours") // horário de funcionamento por dia da semana
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users     User[]
+  patients  Patient[]
+  templates DocumentTemplate[]
+  appointments Appointment[]
+  scheduleBlocks ScheduleBlock[]
+
+  @@map("clinics")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  clinicId  String   @map("clinic_id")
+  name      String
+  email     String   @unique
+  password  String
+  role      String   // "admin" | "dentist" | "secretary" | "readonly"
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  clinic Clinic @relation(fields: [clinicId], references: [id])
+
+  @@map("users")
+}
+
+model Patient {
+  id           String   @id @default(uuid())
+  clinicId     String   @map("clinic_id")
+  fullName     String   @map("full_name")
+  socialName   String?  @map("social_name")
+  birthDate    DateTime @map("birth_date")
+  cpf          String?
+  rg           String?
+  phone        String?
+  whatsapp     String?
+  email        String?
+  address      String?
+  city         String?
+  state        String?
+  zipCode      String?  @map("zip_code")
+  guardianName String?  @map("guardian_name")
+  guardianCpf  String?  @map("guardian_cpf")
+  guardianPhone String? @map("guardian_phone")
+  status       String   @default("active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  clinic          Clinic @relation(fields: [clinicId], references: [id])
+  anamnesis       Anamnesis[]
+  clinicalRecords ClinicalRecord[]
+  treatmentPlans  TreatmentPlan[]
+  documents       GeneratedDocument[]
+  attachments     Attachment[]
+  appointments    Appointment[]
+
+  @@map("patients")
+}
+
+model Anamnesis {
+  id         String   @id @default(uuid())
+  patientId  String   @map("patient_id")
+  version    Int      @default(1)
+  answers    Json
+  filledBy   String   @map("filled_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@map("anamnesis")
+}
+
+model ClinicalRecord {
+  id              String   @id @default(uuid())
+  patientId       String   @map("patient_id")
+  complaint       String?
+  evaluation      String?
+  diagnosis       String?
+  conduct         String?
+  notes           String?
+  professionalId  String   @map("professional_id")
+  status          String   @default("draft")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  patient       Patient @relation(fields: [patientId], references: [id])
+  clinicalNotes ClinicalNote[]
+
+  @@map("clinical_records")
+}
+
+model ClinicalNote {
+  id               String   @id @default(uuid())
+  clinicalRecordId String   @map("clinical_record_id")
+  date             DateTime
+  procedure        String?
+  region           String?
+  evolution        String?
+  intercurrence    String?
+  conduct          String?
+  nextFollowUp     DateTime? @map("next_follow_up")
+  professionalId   String   @map("professional_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  clinicalRecord ClinicalRecord @relation(fields: [clinicalRecordId], references: [id])
+
+  @@map("clinical_notes")
+}
+
+model TreatmentPlan {
+  id         String   @id @default(uuid())
+  patientId  String   @map("patient_id")
+  status     String   @default("proposed")
+  validUntil DateTime? @map("valid_until")
+  acceptedAt DateTime? @map("accepted_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  patient Patient @relation(fields: [patientId], references: [id])
+  items   TreatmentPlanItem[]
+
+  @@map("treatment_plans")
+}
+
+model TreatmentPlanItem {
+  id              String  @id @default(uuid())
+  treatmentPlanId String  @map("treatment_plan_id")
+  procedure       String
+  region          String?
+  quantity        Int     @default(1)
+  price           Decimal @default(0)
+  discount        Decimal @default(0)
+  finalPrice      Decimal @map("final_price")
+  priority        Int     @default(0)
+
+  treatmentPlan TreatmentPlan @relation(fields: [treatmentPlanId], references: [id])
+
+  @@map("treatment_plan_items")
+}
+
+model DocumentTemplate {
+  id        String   @id @default(uuid())
+  clinicId  String   @map("clinic_id")
+  title     String
+  code      String // "consentimento" | "orcamento" | "atestado"
+  version   Int      @default(1)
+  content   String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  clinic    Clinic @relation(fields: [clinicId], references: [id])
+  documents GeneratedDocument[]
+
+  @@map("document_templates")
+}
+
+model GeneratedDocument {
+  id              String    @id @default(uuid())
+  patientId       String    @map("patient_id")
+  templateId      String    @map("template_id")
+  title           String
+  fileUrl         String    @map("file_url")
+  status          String    @default("gerado") // "gerado" | "assinado"
+  fieldsData      Json?     @map("fields_data")
+  signatureMethod String?   @map("signature_method") // "digital" | "escaneado"
+  signatureImage  String?   @map("signature_image") // data URL (base64) da assinatura digital
+  signedAt        DateTime? @map("signed_at")
+  createdBy       String    @map("created_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  patient  Patient @relation(fields: [patientId], references: [id])
+  template DocumentTemplate @relation(fields: [templateId], references: [id])
+
+  @@map("generated_documents")
+}
+
+model Attachment {
+  id         String   @id @default(uuid())
+  patientId  String   @map("patient_id")
+  fileName   String   @map("file_name")
+  fileType   String   @map("file_type")
+  storagePath String  @map("storage_path")
+  uploadedBy String   @map("uploaded_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@map("attachments")
+}
+
+model Appointment {
+  id        String    @id @default(uuid())
+  clinicId  String    @map("clinic_id")
+  patientId String    @map("patient_id")
+  type      String    @default("consulta") // "consulta" | "avaliacao" | "retorno" | "procedimento" | "limpeza"
+  startsAt  DateTime  @map("starts_at")
+  endsAt    DateTime  @map("ends_at")
+  status    String    @default("agendado") // "agendado" | "confirmado" | "concluido" | "cancelado" | "faltou"
+  notes     String?
+  createdBy String    @map("created_by")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  clinic  Clinic  @relation(fields: [clinicId], references: [id])
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@map("appointments")
+}
+
+model ScheduleBlock {
+  id        String   @id @default(uuid())
+  clinicId  String   @map("clinic_id")
+  startsAt  DateTime @map("starts_at")
+  endsAt    DateTime @map("ends_at")
+  reason    String? // "Almoço", "Folga", "Feriado", etc.
+  createdAt DateTime @default(now()) @map("created_at")
+
+  clinic Clinic @relation(fields: [clinicId], references: [id])
+
+  @@map("schedule_blocks")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  action     String
+  resource   String
+  resourceId String   @map("resource_id")
+  oldValue   Json?    @map("old_value")
+  newValue   Json?    @map("new_value")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("audit_logs")
+}
