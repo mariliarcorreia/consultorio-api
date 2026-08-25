@@ -1,9 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class ClinicalRecordsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private audit: AuditService,
+  ) {}
 
   async findByPatient(patientId: string) {
     return this.prisma.clinicalRecord.findFirst({
@@ -87,6 +91,53 @@ export class ClinicalRecordsService {
         professionalId: data.professionalId,
       },
     });
+
+    return this.prisma.clinicalRecord.findUnique({
+      where: { id: clinicalRecordId },
+      include: { clinicalNotes: { orderBy: { date: 'desc' } } },
+    });
+  }
+
+  async remove(id: string, actorUserId?: string) {
+    const atual = await this.prisma.clinicalRecord.findUnique({
+      where: { id },
+      include: { clinicalNotes: true },
+    });
+    if (!atual) throw new NotFoundException('Prontuário não encontrado.');
+
+    await this.prisma.clinicalNote.deleteMany({ where: { clinicalRecordId: id } });
+    await this.prisma.clinicalRecord.delete({ where: { id } });
+
+    if (actorUserId) {
+      await this.audit.log({
+        userId: actorUserId,
+        action: 'delete',
+        resource: 'clinical_record',
+        resourceId: id,
+        oldValue: atual,
+      });
+    }
+
+    return { excluido: true };
+  }
+
+  async removeNote(clinicalRecordId: string, noteId: string, actorUserId?: string) {
+    const nota = await this.prisma.clinicalNote.findUnique({ where: { id: noteId } });
+    if (!nota || nota.clinicalRecordId !== clinicalRecordId) {
+      throw new NotFoundException('Evolução não encontrada nesse prontuário.');
+    }
+
+    await this.prisma.clinicalNote.delete({ where: { id: noteId } });
+
+    if (actorUserId) {
+      await this.audit.log({
+        userId: actorUserId,
+        action: 'delete',
+        resource: 'clinical_note',
+        resourceId: noteId,
+        oldValue: nota,
+      });
+    }
 
     return this.prisma.clinicalRecord.findUnique({
       where: { id: clinicalRecordId },

@@ -26,6 +26,7 @@ export class AppointmentsController {
       clinicId: string;
       patientId: string;
       type?: string;
+      location?: string;
       startsAt: string;
       endsAt: string;
       notes?: string;
@@ -43,6 +44,7 @@ export class AppointmentsController {
       startsAt?: string;
       endsAt?: string;
       type?: string;
+      location?: string;
       status?: string;
       notes?: string;
       actorUserId?: string;

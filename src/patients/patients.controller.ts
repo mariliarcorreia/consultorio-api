@@ -25,6 +25,7 @@ export class PatientsController {
       guardianName?: string;
       guardianCpf?: string;
       guardianPhone?: string;
+      location?: string;
       actorUserId?: string;
     },
   ) {
@@ -61,6 +62,7 @@ export class PatientsController {
       guardianName?: string;
       guardianCpf?: string;
       guardianPhone?: string;
+      location?: string;
       status?: string;
       actorUserId?: string;
     },

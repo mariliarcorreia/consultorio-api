@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { AnamnesisService } from './anamnesis.service';
 
 @Controller('anamnesis')
@@ -20,5 +20,10 @@ export class AnamnesisController {
   @Get()
   findByPatient(@Query('patientId') patientId: string) {
     return this.anamnesisService.findByPatient(patientId);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string, @Query('actorUserId') actorUserId?: string) {
+    return this.anamnesisService.remove(id, actorUserId);
   }
 }

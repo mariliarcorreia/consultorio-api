@@ -61,6 +61,7 @@ model Patient {
   guardianName String?  @map("guardian_name")
   guardianCpf  String?  @map("guardian_cpf")
   guardianPhone String? @map("guardian_phone")
+  location     String? // "consultorio_1" | "consultorio_2" | "parceria"
   status       String   @default("active")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
@@ -213,6 +214,7 @@ model Appointment {
   clinicId  String    @map("clinic_id")
   patientId String    @map("patient_id")
   type      String    @default("consulta") // "consulta" | "avaliacao" | "retorno" | "procedimento" | "limpeza"
+  location  String? // "consultorio_1" | "consultorio_2" | "parceria"
   startsAt  DateTime  @map("starts_at")
   endsAt    DateTime  @map("ends_at")
   status    String    @default("agendado") // "agendado" | "confirmado" | "concluido" | "cancelado" | "faltou"

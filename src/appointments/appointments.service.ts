@@ -88,6 +88,7 @@ export class AppointmentsService {
     clinicId: string;
     patientId: string;
     type?: string;
+    location?: string;
     startsAt: string;
     endsAt: string;
     notes?: string;
@@ -102,6 +103,7 @@ export class AppointmentsService {
         clinicId: data.clinicId,
         patientId: data.patientId,
         type: data.type || 'consulta',
+        location: data.location,
         startsAt,
         endsAt,
         notes: data.notes,
@@ -127,6 +129,7 @@ export class AppointmentsService {
       startsAt?: string;
       endsAt?: string;
       type?: string;
+      location?: string;
       status?: string;
       notes?: string;
       actorUserId?: string;
@@ -151,6 +154,7 @@ export class AppointmentsService {
         ...(data.startsAt && { startsAt: novoInicio }),
         ...(data.endsAt && { endsAt: novoFim }),
         ...(data.type !== undefined && { type: data.type }),
+        ...(data.location !== undefined && { location: data.location }),
         ...(data.status !== undefined && { status: data.status }),
         ...(data.notes !== undefined && { notes: data.notes }),
       },

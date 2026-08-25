@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ClinicalRecordsService } from './clinical-records.service';
 
 @Controller('clinical-records')
@@ -58,5 +58,19 @@ export class ClinicalRecordsController {
     },
   ) {
     return this.service.addNote(id, body);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string, @Query('actorUserId') actorUserId?: string) {
+    return this.service.remove(id, actorUserId);
+  }
+
+  @Delete(':id/notes/:noteId')
+  removeNote(
+    @Param('id') id: string,
+    @Param('noteId') noteId: string,
+    @Query('actorUserId') actorUserId?: string,
+  ) {
+    return this.service.removeNote(id, noteId, actorUserId);
   }
 }

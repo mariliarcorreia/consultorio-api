@@ -1,9 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class TreatmentPlansService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private audit: AuditService,
+  ) {}
 
   async findByPatient(patientId: string) {
     return this.prisma.treatmentPlan.findMany({
@@ -63,6 +67,50 @@ export class TreatmentPlansService {
         priority: data.priority ?? 0,
       },
     });
+
+    return this.prisma.treatmentPlan.findUnique({
+      where: { id: treatmentPlanId },
+      include: { items: true },
+    });
+  }
+
+  async remove(id: string, actorUserId?: string) {
+    const atual = await this.prisma.treatmentPlan.findUnique({ where: { id }, include: { items: true } });
+    if (!atual) throw new NotFoundException('Plano de tratamento não encontrado.');
+
+    await this.prisma.treatmentPlanItem.deleteMany({ where: { treatmentPlanId: id } });
+    await this.prisma.treatmentPlan.delete({ where: { id } });
+
+    if (actorUserId) {
+      await this.audit.log({
+        userId: actorUserId,
+        action: 'delete',
+        resource: 'treatment_plan',
+        resourceId: id,
+        oldValue: atual,
+      });
+    }
+
+    return { excluido: true };
+  }
+
+  async removeItem(treatmentPlanId: string, itemId: string, actorUserId?: string) {
+    const item = await this.prisma.treatmentPlanItem.findUnique({ where: { id: itemId } });
+    if (!item || item.treatmentPlanId !== treatmentPlanId) {
+      throw new NotFoundException('Procedimento não encontrado nesse plano.');
+    }
+
+    await this.prisma.treatmentPlanItem.delete({ where: { id: itemId } });
+
+    if (actorUserId) {
+      await this.audit.log({
+        userId: actorUserId,
+        action: 'delete',
+        resource: 'treatment_plan_item',
+        resourceId: itemId,
+        oldValue: item,
+      });
+    }
 
     return this.prisma.treatmentPlan.findUnique({
       where: { id: treatmentPlanId },

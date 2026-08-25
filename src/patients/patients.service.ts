@@ -18,6 +18,7 @@ type PatientFields = {
   guardianName?: string;
   guardianCpf?: string;
   guardianPhone?: string;
+  location?: string;
   status?: string;
 };
 
@@ -49,6 +50,7 @@ export class PatientsService {
         guardianName: data.guardianName,
         guardianCpf: data.guardianCpf,
         guardianPhone: data.guardianPhone,
+        location: data.location,
       },
     });
 
@@ -99,6 +101,7 @@ export class PatientsService {
         ...(fields.guardianName !== undefined && { guardianName: fields.guardianName }),
         ...(fields.guardianCpf !== undefined && { guardianCpf: fields.guardianCpf }),
         ...(fields.guardianPhone !== undefined && { guardianPhone: fields.guardianPhone }),
+        ...(fields.location !== undefined && { location: fields.location }),
         ...(fields.status !== undefined && { status: fields.status }),
       },
     });

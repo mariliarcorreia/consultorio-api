@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { TreatmentPlansService } from './treatment-plans.service';
 
 @Controller('treatment-plans')
@@ -47,5 +47,19 @@ export class TreatmentPlansController {
     },
   ) {
     return this.service.addItem(id, body);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string, @Query('actorUserId') actorUserId?: string) {
+    return this.service.remove(id, actorUserId);
+  }
+
+  @Delete(':id/items/:itemId')
+  removeItem(
+    @Param('id') id: string,
+    @Param('itemId') itemId: string,
+    @Query('actorUserId') actorUserId?: string,
+  ) {
+    return this.service.removeItem(id, itemId, actorUserId);
   }
 }
