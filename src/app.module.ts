@@ -14,6 +14,7 @@ import { StorageModule } from './storage/storage.module';
 import { AttachmentsModule } from './attachments/attachments.module';
 import { DocumentsModule } from './documents/documents.module';
 import { AppointmentsModule } from './appointments/appointments.module';
+import { OdontogramModule } from './odontogram/odontogram.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AppointmentsModule } from './appointments/appointments.module';
     AttachmentsModule,
     DocumentsModule,
     AppointmentsModule,
+    OdontogramModule,
   ],
   controllers: [AppController],
   providers: [AppService],

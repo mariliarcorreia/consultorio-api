@@ -74,6 +74,7 @@ model Patient {
   documents       GeneratedDocument[]
   attachments     Attachment[]
   appointments    Appointment[]
+  odontogramEntries OdontogramEntry[]
 
   @@map("patients")
 }
@@ -157,6 +158,22 @@ model TreatmentPlanItem {
   treatmentPlan TreatmentPlan @relation(fields: [treatmentPlanId], references: [id])
 
   @@map("treatment_plan_items")
+}
+
+model OdontogramEntry {
+  id             String   @id @default(uuid())
+  patientId      String   @map("patient_id")
+  toothNumber    Int      @map("tooth_number") // notação FDI (11-18, 21-28, 31-38, 41-48)
+  surfaces       String[] // "vestibular" | "lingual" | "palatina" | "mesial" | "distal" | "oclusal" | "incisal"
+  condition      String // "higido" | "carie" | "restauracao" | "endodontia" | "coroa" | "implante" | "ausente" | "extracao_indicada" | "fratura" | "protese" | "lesao" | "acompanhamento" | "outro"
+  status         String // "diagnostico" | "tratamento_necessario" | "planejado" | "autorizado" | "agendado" | "em_tratamento" | "realizado" | "acompanhamento"
+  observation    String?
+  professionalId String   @map("professional_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@map("odontogram_entries")
 }
 
 model DocumentTemplate {
